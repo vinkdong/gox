@@ -1,0 +1,12 @@
+version: 2
+
+test:
+   build:
+     docker:
+       - image: circleci/golang:1.8.1
+     steps:
+       - checkout
+       - run:
+             name: Test
+             command: go test -v ./...
+    
