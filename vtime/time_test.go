@@ -15,6 +15,7 @@ const (
 	TestTimeMinute = 51
 	TestTimeString = "2017-12-28 19:51:07"
 	TestTimeFormat = "2006-01-02 15:04:05"
+	TestTimeTZ     = "Asia/Shanghai"
 )
 
 func checkTimeIn(t *testing.T, time time.Time) {
@@ -65,6 +66,7 @@ func TestParserVTime(t *testing.T) {
 func TestFromTime(t *testing.T) {
 	vt := Time{
 		Format: TestTimeFormat,
+		TZ: TestTimeTZ,
 	}
 	var tsS int64
 	tsS = TestTimeS
@@ -78,6 +80,7 @@ func TestFromTime(t *testing.T) {
 func TestTimeTransfer(t *testing.T) {
 	to := &Time{
 		Format: TestTimeFormat,
+		TZ:     TestTimeTZ,
 	}
 	from := &Time{
 		Format: "timestamp",

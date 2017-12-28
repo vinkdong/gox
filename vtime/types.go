@@ -10,6 +10,7 @@ type Time struct {
 	Unit   string
 	Value  string
 	Time   time.Time
+	TZ     string
 }
 
 func (t *Time) Transfer(to *Time) error {
@@ -45,6 +46,12 @@ func (t *Time) Parser() (time.Time, error) {
 }
 
 func (t *Time) FromTime(stdTime time.Time) {
+	if t.TZ != ""{
+		loc, err := time.LoadLocation(t.TZ)
+		if err == nil{
+			stdTime.In(loc)
+		}
+	}
 	if t.Format == "timestamp" {
 		switch t.Unit {
 		case "ms":
