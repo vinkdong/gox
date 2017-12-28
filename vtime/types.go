@@ -46,12 +46,6 @@ func (t *Time) Parser() (time.Time, error) {
 }
 
 func (t *Time) FromTime(stdTime time.Time) {
-	if t.TZ != ""{
-		loc, err := time.LoadLocation(t.TZ)
-		if err == nil{
-			stdTime.In(loc)
-		}
-	}
 	if t.Format == "timestamp" {
 		switch t.Unit {
 		case "ms":
@@ -69,6 +63,13 @@ func (t *Time) FromTime(stdTime time.Time) {
 			return
 		}
 	} else {
+		if t.TZ != ""{
+			loc, err := time.LoadLocation(t.TZ)
+			if err == nil{
+				t.Value = stdTime.In(loc).Format(t.Format)
+				return
+			}
+		}
 		t.Value = stdTime.Format(t.Format)
 	}
 }
