@@ -40,6 +40,13 @@ func (t *Time) Parser() (time.Time, error) {
 		}
 		return t.Time, err
 	} else {
+		if t.TZ != "" {
+			loc, err := time.LoadLocation(t.TZ)
+			if err == nil {
+				t.Time, err = time.ParseInLocation(t.Format, t.Value, loc)
+				return t.Time, err
+			}
+		}
 		t.Time, err = time.Parse(t.Format, t.Value)
 	}
 	return t.Time, err

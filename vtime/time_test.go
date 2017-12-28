@@ -8,7 +8,7 @@ import (
 
 const (
 	TestTimeMS     = 1514461867000
-	TestTimeNS     = 1514461867000 * 10e5
+	TestTimeNS     = 1514461867000000000
 	TestTimeS      = 1514461867
 	TestTimeYear   = 2017
 	TestTimeSecond = 7
@@ -27,6 +27,9 @@ func checkTimeIn(t *testing.T, time time.Time) {
 	}
 	if time.Minute() != TestTimeMinute {
 		t.Errorf("Expect Time minute is %d, But got %d", TestTimeMinute, time.UTC().Minute())
+	}
+	if time.UnixNano() != TestTimeNS {
+		t.Errorf("Expect Timestamp is %d, but got %d", TestTimeNS, time.UnixNano())
 	}
 }
 
@@ -55,6 +58,7 @@ func TestParserVTime(t *testing.T) {
 	vt := Time{
 		Format: "2006-01-02 15:04:05",
 		Value:  "2017-12-28 19:51:07",
+		TZ: TestTimeTZ,
 	}
 	time, err := vt.Parser()
 	if err!=nil{
