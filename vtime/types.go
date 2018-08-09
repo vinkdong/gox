@@ -3,16 +3,45 @@ package vtime
 import (
 	"strconv"
 	"time"
+	"strings"
+	"github.com/vinkdong/gox/log"
 )
 
 type Time struct {
-	Format string
-	Unit   string
-	Value  string
-	Time   time.Time
-	TZ     string
+	Format string    // timestamp or time layout
+	Unit   string    // if format is timestamp it can be ms ns s ..
+	Value  string    // a string formatted time value
+	Time   time.Time // the standard time
+	TZ     string    // if don't set timezoo
 }
 
+func (t *Time) ToSpecFormat(format string) string {
+	return t.Time.Format(format)
+}
+
+func (t *Time) FromRelativeTime(relative string) error {
+	if strings.HasPrefix(relative, "now") {
+
+		var (
+			now      = time.Now().UTC()
+			duration time.Duration
+			err      error
+		)
+		duration, err = time.ParseDuration(strings.TrimPrefix(relative, "now"))
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+
+		t.Time = now.Add(duration)
+		t.FromTime(t.Time)
+	}
+	return nil
+}
+
+/**
+transfer a time format to another format
+ */
 func (t *Time) Transfer(to *Time) error {
 	stdTime, err := t.Parser()
 	if err != nil {
@@ -52,6 +81,9 @@ func (t *Time) Parser() (time.Time, error) {
 	return t.Time, err
 }
 
+/**
+parser time to vtime
+ */
 func (t *Time) FromTime(stdTime time.Time) {
 	if t.Format == "timestamp" {
 		switch t.Unit {
@@ -70,6 +102,9 @@ func (t *Time) FromTime(stdTime time.Time) {
 			return
 		}
 	} else {
+		if t.Format == ""{
+			t.Format = "2006-01-02 15:04:05"
+		}
 		if t.TZ != ""{
 			loc, err := time.LoadLocation(t.TZ)
 			if err == nil{

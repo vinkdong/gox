@@ -96,3 +96,14 @@ func TestTimeTransfer(t *testing.T) {
 		t.Errorf("expect time value is %s but got %s", TestTimeString, to.Value)
 	}
 }
+
+func TestTime_FromRelativeTime(t *testing.T) {
+	tm := &Time{
+		Format: TestTimeFormat,
+		TZ:     TestTimeTZ,
+	}
+	tm.FromRelativeTime("now+1h")
+	if tm.Time.Hour() != time.Now().UTC().Hour()+1 {
+		t.Errorf("expect time hour is %d but got %d", time.Now().UTC().Hour()+1, tm.Time.Hour(), )
+	}
+}
