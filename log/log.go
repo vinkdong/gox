@@ -181,3 +181,9 @@ func Success(l interface{}) {
 	success := fmt.Sprintf("[INFO] %v", l)
 	std.Output(2, success, ClrSuccess)
 }
+
+func Successf(format string, a ...interface{}) {
+	tmp := fmt.Sprintf(format, a...)
+	success := fmt.Sprintf("[INFO] %v", tmp)
+	std.Output(2, success, ClrSuccess)
+}
