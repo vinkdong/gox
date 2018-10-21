@@ -1,7 +1,6 @@
 package random
 
 import (
-	"time"
 	"math/rand"
 )
 
