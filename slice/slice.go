@@ -1,4 +1,4 @@
-package Slice
+package slice
 
 type Runtime struct {
 }
