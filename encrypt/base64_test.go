@@ -17,33 +17,32 @@ var (
 )
 
 func TestBase64Decode(t *testing.T) {
-	if val, _ := Base64Decode(testStringE1); val != testString1 {
+	if val, _ := Base64StringDecode(testStringE1); val != testString1 {
 		t.Fatal(testString1, "base64 decode incorrect")
 	}
-	if val, _ := Base64Decode(testStringE2); val != testString2 {
+	if val, _ := Base64StringDecode(testStringE2); val != testString2 {
 		t.Fatal(testString1, "base64 decode incorrect")
 	}
-	if val, _ := Base64Decode(testStringE3); val != testString3 {
+	if val, _ := Base64StringDecode(testStringE3); val != testString3 {
 		t.Fatal(testString1, "base64 decode incorrect")
 	}
-	if val, _ := Base64Decode(testStringE4); val != testString4 {
+	if val, _ := Base64StringDecode(testStringE4); val != testString4 {
 		t.Fatal(testString1, "base64 decode incorrect")
 	}
 }
 
 func TestBase64Encode(t *testing.T) {
 
-	if Base64Encode(testString1) != testStringE1 {
+	if Base64StringEncode(testString1) != testStringE1 {
 		t.Fatal("base64 encode incorrect", testString1)
 	}
-	if Base64Encode(testString2) != testStringE2 {
+	if Base64StringEncode(testString2) != testStringE2 {
 		t.Fatal("base64 encode incorrect", testString2)
 	}
-	if Base64Encode(testString3) != testStringE3 {
+	if Base64StringEncode(testString3) != testStringE3 {
 		t.Fatal("base64 encode incorrect", testString3)
 	}
-	if Base64Encode(testString4) != testStringE4 {
+	if Base64StringEncode(testString4) != testStringE4 {
 		t.Fatal(testString4, "base64 encode incorrect")
 	}
-
 }
