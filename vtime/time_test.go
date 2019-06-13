@@ -1,9 +1,9 @@
 package vtime
 
 import (
+	"fmt"
 	"testing"
 	"time"
-	"fmt"
 )
 
 const (
@@ -58,19 +58,19 @@ func TestParserVTime(t *testing.T) {
 	vt := Time{
 		Format: "2006-01-02 15:04:05",
 		Value:  "2017-12-28 19:51:07",
-		TZ: TestTimeTZ,
+		TZ:     TestTimeTZ,
 	}
 	time, err := vt.Parser()
-	if err!=nil{
+	if err != nil {
 		t.Fail()
 	}
-	checkTimeIn(t,time)
+	checkTimeIn(t, time)
 }
 
 func TestFromTime(t *testing.T) {
 	vt := Time{
 		Format: TestTimeFormat,
-		TZ: TestTimeTZ,
+		TZ:     TestTimeTZ,
 	}
 	var tsS int64
 	tsS = TestTimeS
@@ -104,6 +104,6 @@ func TestTime_FromRelativeTime(t *testing.T) {
 	}
 	tm.FromRelativeTime("now+1h")
 	if tm.Time.Hour() != time.Now().UTC().Hour()+1 {
-		t.Errorf("expect time hour is %d but got %d", time.Now().UTC().Hour()+1, tm.Time.Hour(), )
+		t.Errorf("expect time hour is %d but got %d", time.Now().UTC().Hour()+1, tm.Time.Hour())
 	}
 }

@@ -1,10 +1,10 @@
 package vtime
 
 import (
-	"strconv"
-	"time"
-	"strings"
 	"github.com/vinkdong/gox/log"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type Time struct {
@@ -41,7 +41,7 @@ func (t *Time) FromRelativeTime(relative string) error {
 
 /**
 transfer a time format to another format
- */
+*/
 func (t *Time) Transfer(to *Time) error {
 	stdTime, err := t.Parser()
 	if err != nil {
@@ -83,7 +83,7 @@ func (t *Time) Parser() (time.Time, error) {
 
 /**
 parser time to vtime
- */
+*/
 func (t *Time) FromTime(stdTime time.Time) {
 	if t.Format == "timestamp" {
 		switch t.Unit {
@@ -102,12 +102,12 @@ func (t *Time) FromTime(stdTime time.Time) {
 			return
 		}
 	} else {
-		if t.Format == ""{
+		if t.Format == "" {
 			t.Format = "2006-01-02 15:04:05"
 		}
-		if t.TZ != ""{
+		if t.TZ != "" {
 			loc, err := time.LoadLocation(t.TZ)
-			if err == nil{
+			if err == nil {
 				t.Value = stdTime.In(loc).Format(t.Format)
 				return
 			}

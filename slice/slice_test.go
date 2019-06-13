@@ -1,8 +1,8 @@
 package slice
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 )
 
 func TestDifference(t *testing.T) {
