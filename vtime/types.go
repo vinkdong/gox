@@ -23,7 +23,7 @@ func (t *Time) FromRelativeTime(relative string) error {
 	if strings.HasPrefix(relative, "now") {
 
 		var (
-			now      = time.Now().UTC()
+			now      = time.Now()
 			duration time.Duration
 			err      error
 		)
