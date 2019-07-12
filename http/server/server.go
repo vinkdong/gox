@@ -8,7 +8,7 @@ type Server struct {
 }
 
 func (s *Server) Start() error {
-	return http.ListenAndServe(s.addr, nil)
+	return http.ListenAndServe(s.addr, s.mux)
 }
 
 func (s *Server) AddHandler(pattern string, handler http.Handler) {
