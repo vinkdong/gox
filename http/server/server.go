@@ -15,7 +15,7 @@ func (s *Server) AddHandler(pattern string, handler http.Handler) {
 	s.mux.Handle(pattern, handler)
 }
 
-func (s *Server) AddHandlerFunc(pattern string, handler func(ResponseWriter, *Request)) {
+func (s *Server) AddHandlerFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
 	s.mux.HandleFunc(pattern, handler)
 }
 
