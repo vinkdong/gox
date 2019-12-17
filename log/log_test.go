@@ -21,6 +21,14 @@ func TestSuccessf(t *testing.T) {
 	Successf("this is success with args type: %s", "string")
 }
 
+func TestWarn(t *testing.T) {
+	Warn("this is warn")
+}
+
+func TestWarnf(t *testing.T) {
+	Warnf("this is warn with args type: %s", "string")
+}
+
 func TestLock(t *testing.T) {
 	Info("this is first log next lock log")
 	Lock()
