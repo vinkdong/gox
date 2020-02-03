@@ -21,3 +21,19 @@ func Difference(sliceA []string, sliceB []string) []string {
 	}
 	return diff
 }
+
+func UnionString(slices ...[]string) []string {
+	m := make(map[string]bool)
+	for _, s := range slices {
+		for _, val := range s {
+			m[val] = true
+		}
+	}
+	s := make([]string, len(m))
+	i := 0
+	for k, _ := range m {
+		s[i] = k
+		i++
+	}
+	return s
+}

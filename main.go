@@ -31,23 +31,23 @@ func main() {
 
 	// random
 	random.Seed(time.Now().UnixNano())
-	log.Infof("get random int (1-100) %d",random.RangeInt(1,100))
-	log.Infof("get random string (a-Z) %s",random.String(1,100))
+	log.Infof("get random int (1-100) %d", random.RangeInt(1, 100))
+	log.Infof("get random string (a-Z) %s", random.String(1, 100))
 
 	// slice
-	sa := []string{"a","b","c"}
-	sb := []string{"b","c","e"}
-	log.Infof("slice %v with %v difference %v",sa,sb,slice.Difference(sa,sb))
-	log.Infof("slice %v with %v difference %v",sb,sa,slice.Difference(sb,sa))
+	sa := []string{"a", "b", "c"}
+	sb := []string{"b", "c", "e"}
+	log.Infof("slice %v with %v difference %v", sa, sb, slice.Difference(sa, sb))
+	log.Infof("slice %v with %v difference %v", sb, sa, slice.Difference(sb, sa))
 
 	// vtime
-	log.Successf("time of 1562920273000 is %s",vtime.ParserTimestampMs(1562920273000).String())
-	log.Successf("time of 1562920273000110000 is %s",vtime.ParserTimestampNs(1562920273000110000))
+	log.Successf("time of 1562920273000 is %s", vtime.ParserTimestampMs(1562920273000).String())
+	log.Successf("time of 1562920273000110000 is %s", vtime.ParserTimestampNs(1562920273000110000))
 
 	t := vtime.Time{
 		Format: "2006-01-02 15:04:05",
-		TZ: "Asia/Shanghai",
+		TZ:     "Asia/Shanghai",
 	}
 	t.FromRelativeTime("now-1h")
-	log.Infof("now -1h is %s",t.Time.String())
+	log.Infof("now -1h is %s", t.Time.String())
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func TestDownload(t *testing.T) {
-	statusCode,err := Download("https://vinkdong.com/sis", "a/b/c/sxs")
+	statusCode, err := Download("https://vinkdong.com/sis", "a/b/c/sxs")
 	if err != nil {
 		t.Fatal(err)
 	}
