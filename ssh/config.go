@@ -20,11 +20,70 @@ type HostConfig struct {
 	ServerAliveInterval   int
 	HostName              string
 	User                  string
-	Port                  string
+	Port                  int
 	StrictHostKeyChecking string
 	UserKnownHostsFile    string
 	IdentityFile          string
 	LogLevel              string
+}
+
+func (hc *HostConfig) Map(lambda func(key string, value interface{})) {
+	s := reflect.ValueOf(hc).Elem()
+	typeOfT := s.Type()
+	for i := 0; i < s.NumField(); i++ {
+		f := s.Field(i)
+		lambda(typeOfT.Field(i).Name, f.Interface())
+	}
+}
+
+func (c *Config) SetHost(host HostConfig) {
+	newConfig := make(Config, 0, len(*c)+1)
+	isExist := false
+	for _, v := range *c {
+		if v.Host == host.Host {
+			// for no change order
+			newConfig = append(newConfig, host)
+			isExist = true
+			continue
+		}
+		newConfig = append(newConfig, v)
+	}
+	if !isExist {
+		newConfig = append(newConfig, host)
+	}
+	*c = newConfig
+}
+
+func (c *Config) GetHost(host string) HostConfig {
+	for _, v := range *c {
+		if v.Host == host {
+			return v
+		}
+	}
+	return HostConfig{}
+}
+
+func (c *Config) Marshal() []byte {
+	buf := bytes.Buffer{}
+
+	l := func(key string, value interface{}) {
+		if key == "Host" {
+			return
+		}
+		switch value.(type) {
+		case int:
+			// 不输出为0的数据
+			if value.(int) == 0 {
+				return
+			}
+		}
+		buf.WriteString(fmt.Sprintf("   %s %v\n", key, value))
+	}
+	for _, v := range *c {
+		buf.WriteString(fmt.Sprintf("Host %s\n", v.Host))
+		v.Map(l)
+	}
+	return buf.Bytes()
 }
 
 func Unmarshal(cfg *Config, data []byte) {
@@ -57,7 +116,6 @@ func Scan(r io.Reader) *Config {
 		if err := setHostConfig(&host, key, value); err != nil {
 			log.Error(err)
 		}
-		fmt.Println(host)
 	}
 	if &host != nil {
 		c = append(c, host)
