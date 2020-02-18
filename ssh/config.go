@@ -76,6 +76,10 @@ func (c *Config) Marshal() []byte {
 			if value.(int) == 0 {
 				return
 			}
+		case string:
+			if value.(string) == "" {
+				return
+			}
 		}
 		buf.WriteString(fmt.Sprintf("   %s %v\n", key, value))
 	}

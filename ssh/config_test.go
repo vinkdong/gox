@@ -31,7 +31,7 @@ var c = Config{
 		Host:                  "abc3",
 		ServerAliveInterval:   180,
 		HostName:              "abc3.com",
-		User:                  "root3",
+		User:                  "",
 		Port:                  0,
 		StrictHostKeyChecking: "",
 		UserKnownHostsFile:    "",
