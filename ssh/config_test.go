@@ -103,3 +103,11 @@ func TestConfig_SetHost(t *testing.T) {
 		t.Fatal("set config host failed, should get port 5555 of abc3 host")
 	}
 }
+
+func TestConfig_RemoveHost(t *testing.T) {
+	c.RemoveHost("abc1")
+	host := c.GetHost("abc1")
+	if host.Host != "" {
+		t.Fatal("remove host failed")
+	}
+}

@@ -54,6 +54,17 @@ func (c *Config) SetHost(host HostConfig) {
 	*c = newConfig
 }
 
+func (c *Config) RemoveHost(host string) {
+	newConfig := make(Config, 0, len(*c)+1)
+	for _, v := range *c {
+		if v.Host == host {
+			continue
+		}
+		newConfig = append(newConfig, v)
+	}
+	*c = newConfig
+}
+
 func (c *Config) GetHost(host string) HostConfig {
 	for _, v := range *c {
 		if v.Host == host {
@@ -160,6 +171,7 @@ func convertLine(lineBytes []byte) (string, string) {
 	return key.String(), strings.Trim(value.String(), " ")
 }
 
+// todo: should no use reflect
 func setHostConfig(config *HostConfig, field string, value string) error {
 	v := reflect.ValueOf(config).Elem().FieldByName(field)
 	if !v.IsValid() {
