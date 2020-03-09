@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+// ssh config文件
 type Config []HostConfig
 
 type HostConfig struct {
