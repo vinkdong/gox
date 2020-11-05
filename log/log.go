@@ -30,7 +30,6 @@ type Logger struct {
 
 func (l *Logger) Write(p []byte) (n int, err error) {
 	l.buf = append(l.buf, p...)
-	os.UserHomeDir()
 	return l.out.Write(p)
 }
 
@@ -210,14 +209,19 @@ func Write(l interface{}) {
 	line := fmt.Sprintf("\n%v", l)
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
-		panic(err)
+		return
 	}
 
 	defer f.Close()
 
 	if _, err = f.WriteString(line); err != nil {
-		panic(err)
+		return
 	}
+}
+
+func Writef(format string, a ...interface{}) {
+	tmp := fmt.Sprintf(format, a...)
+	Write(tmp)
 }
 
 func Lock() {
