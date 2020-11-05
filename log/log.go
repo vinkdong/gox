@@ -16,9 +16,13 @@ const ClrSuccess = "\x1b[32;2m"
 const ClrWarn = "\x1b[33;2m"
 
 var debug = false
-var writeEnabled = false
-var filename = "/var/log/gox.log"
+
 var std = New(os.Stdout, "", log.LstdFlags)
+var (
+	writeLock    = &sync.RWMutex{}
+	writeEnabled = false
+	filename     = "/var/log/gox.log"
+)
 
 type Logger struct {
 	mu     sync.Mutex // ensures atomic writes; protects the following fields
@@ -202,11 +206,14 @@ func Debugf(format string, a ...interface{}) {
 }
 
 func Write(l interface{}) {
+	writeLock.Lock()
+	defer writeLock.Unlock()
 	// 不去检查文件夹是否存在，使用前请确认文件夹存在并且有相关权限
 	if !writeEnabled {
 		return
 	}
-	line := fmt.Sprintf("\n%v", l)
+	formattedTime := time.Now().Format("2006/1/02 15:04:05")
+	line := fmt.Sprintf("\n%s %v", formattedTime, l)
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return
