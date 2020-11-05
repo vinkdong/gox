@@ -46,3 +46,11 @@ func TestLock(t *testing.T) {
 	Unlock()
 	time.Sleep(time.Second * 5)
 }
+
+func TestWrite(t *testing.T) {
+	writeEnabled = true
+	SetFilename("/tmp/gox.log")
+	Write("hahaha")
+	Write(123)
+	Write('a')
+}

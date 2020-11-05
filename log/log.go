@@ -16,6 +16,8 @@ const ClrSuccess = "\x1b[32;2m"
 const ClrWarn = "\x1b[33;2m"
 
 var debug = false
+var writeEnabled = false
+var filename = "/var/log/gox.log"
 var std = New(os.Stdout, "", log.LstdFlags)
 
 type Logger struct {
@@ -28,6 +30,7 @@ type Logger struct {
 
 func (l *Logger) Write(p []byte) (n int, err error) {
 	l.buf = append(l.buf, p...)
+	os.UserHomeDir()
 	return l.out.Write(p)
 }
 
@@ -154,6 +157,14 @@ func EnableDebug() {
 	debug = true
 }
 
+func EnableWrite() {
+	writeEnabled = true
+}
+
+func SetFilename(name string) {
+	filename = name
+}
+
 func Info(l interface{}) {
 	info := fmt.Sprintf("[%s] %v", "INFO", l)
 	std.Output(2, info, "")
@@ -188,6 +199,24 @@ func Debugf(format string, a ...interface{}) {
 		tmp := fmt.Sprintf(format, a...)
 		debug := fmt.Sprintf("[%s] %s", "DEBUG", tmp)
 		std.Output(2, debug, ClrDEBUG)
+	}
+}
+
+func Write(l interface{}) {
+	// 不去检查文件夹是否存在，使用前请确认文件夹存在并且有相关权限
+	if !writeEnabled {
+		return
+	}
+	line := fmt.Sprintf("\n%v", l)
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+
+	if _, err = f.WriteString(line); err != nil {
+		panic(err)
 	}
 }
 
