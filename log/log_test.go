@@ -54,3 +54,7 @@ func TestWrite(t *testing.T) {
 	Write(123)
 	Write('a')
 }
+
+func TestErrorLine(t *testing.T) {
+	ErrorLine("this is log with file info")
+}

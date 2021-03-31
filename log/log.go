@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -15,7 +17,10 @@ const ClrDEBUG = "\x1b[37;2m"
 const ClrSuccess = "\x1b[32;2m"
 const ClrWarn = "\x1b[33;2m"
 
-var debug = false
+var (
+	debug        = false
+	hideFileInfo = true
+)
 
 var std = New(os.Stdout, "", log.LstdFlags)
 var (
@@ -156,43 +161,62 @@ func (l *Logger) Output(calldepth int, s string, color string) error {
 	return err
 }
 
+// 展示Debug日志
 func EnableDebug() {
 	debug = true
 }
 
+// 在日志中展示相关的文件信息
+func EnableFileInfo() {
+	hideFileInfo = false
+}
+
+// 在打印日志的同时写入日志文件
 func EnableWrite() {
 	writeEnabled = true
 }
 
+// 设置日志文件的路径
 func SetFilename(name string) {
 	filename = name
 }
 
 func Info(l interface{}) {
-	info := fmt.Sprintf("[%s] %v", "INFO", l)
+	info := fmt.Sprintf("[%s] %s%v", "INFO", getLineInfo(hideFileInfo), l)
 	std.Output(2, info, "")
 }
 
 func Infof(l string, a ...interface{}) {
 	tmp := fmt.Sprintf(l, a...)
-	info := fmt.Sprintf("[%s] %s", "INFO", tmp)
+	info := fmt.Sprintf("[%s] %s%s", "INFO", getLineInfo(hideFileInfo), tmp)
 	std.Output(2, info, "")
 }
 
 func Error(l interface{}) {
-	err := fmt.Sprintf("[%s] %v", "Error", l)
+	err := fmt.Sprintf("[%s] %s%v", "Error", getLineInfo(hideFileInfo), l)
 	log.Println(err)
 }
 
 func Errorf(format string, a ...interface{}) {
 	tmp := fmt.Sprintf(format, a...)
-	err := fmt.Sprintf("[%s] %s", "Error", tmp)
+	err := fmt.Sprintf("[%s] %s%s", "Error", getLineInfo(hideFileInfo), tmp)
+	log.Println(err)
+}
+
+func ErrorLine(l string, a ...interface{}) {
+	err := fmt.Sprintf("[%s] %s%s", "Error", getLineInfo(false), l)
+	log.Println(err)
+}
+
+func ErrorLinef(format string, a ...interface{}) {
+	tmp := fmt.Sprintf(format, a...)
+	err := fmt.Sprintf("[%s] %s%s", "Error", getLineInfo(false), tmp)
 	log.Println(err)
 }
 
 func Debug(l interface{}) {
 	if debug {
-		debug := fmt.Sprintf("[%s] %v", "DEBUG", l)
+		debug := fmt.Sprintf("[%s] %s%v", "DEBUG", getLineInfo(hideFileInfo), l)
 		std.Output(2, debug, ClrDEBUG)
 	}
 }
@@ -200,7 +224,7 @@ func Debug(l interface{}) {
 func Debugf(format string, a ...interface{}) {
 	if debug {
 		tmp := fmt.Sprintf(format, a...)
-		debug := fmt.Sprintf("[%s] %s", "DEBUG", tmp)
+		debug := fmt.Sprintf("[%s] %s%s", "DEBUG", getLineInfo(hideFileInfo), tmp)
 		std.Output(2, debug, ClrDEBUG)
 	}
 }
@@ -240,23 +264,35 @@ func Unlock() {
 }
 
 func Success(l interface{}) {
-	success := fmt.Sprintf("[INFO] %v", l)
+	success := fmt.Sprintf("[INFO] %s%v", getLineInfo(hideFileInfo), l)
 	std.Output(2, success, ClrSuccess)
 }
 
 func Successf(format string, a ...interface{}) {
 	tmp := fmt.Sprintf(format, a...)
-	success := fmt.Sprintf("[INFO] %v", tmp)
+	success := fmt.Sprintf("[INFO] %s%v", getLineInfo(hideFileInfo), tmp)
 	std.Output(2, success, ClrSuccess)
 }
 
 func Warn(l interface{}) {
-	warn := fmt.Sprintf("[WARN] %v", l)
+	warn := fmt.Sprintf("[WARN] %s%v", getLineInfo(hideFileInfo), l)
 	std.Output(2, warn, ClrWarn)
 }
 
 func Warnf(format string, a ...interface{}) {
 	tmp := fmt.Sprintf(format, a...)
-	warn := fmt.Sprintf("[WARN] %v", tmp)
+	warn := fmt.Sprintf("[WARN] %s%v", getLineInfo(hideFileInfo), tmp)
 	std.Output(2, warn, ClrWarn)
+}
+
+func getLineInfo(skip bool) string {
+	if skip {
+		return ""
+	}
+	_, file, line, _ := runtime.Caller(2)
+	filenameSplit := strings.Split(file, "/")
+	if len(filenameSplit) > 2 {
+		return fmt.Sprintf("%s/%s:%d ", filenameSplit[len(filenameSplit)-2], filenameSplit[len(filenameSplit)-1], line)
+	}
+	return file + ":" + strconv.Itoa(line) + " "
 }
