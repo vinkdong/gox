@@ -1,10 +1,10 @@
 package vtime
 
 import (
-	"github.com/vinkdong/gox/log"
 	"strconv"
 	"strings"
 	"time"
+	"v2k.io/gox/log"
 )
 
 type Time struct {

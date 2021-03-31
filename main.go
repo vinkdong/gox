@@ -5,13 +5,13 @@ This Main function just a example func to use all functions
 package main
 
 import (
-	"github.com/vinkdong/gox/encrypt"
-	"github.com/vinkdong/gox/http/server"
-	"github.com/vinkdong/gox/log"
-	"github.com/vinkdong/gox/random"
-	"github.com/vinkdong/gox/slice"
-	"github.com/vinkdong/gox/vtime"
 	"time"
+	"v2k.io/gox/encrypt"
+	"v2k.io/gox/http/server"
+	"v2k.io/gox/log"
+	"v2k.io/gox/random"
+	"v2k.io/gox/slice"
+	"v2k.io/gox/vtime"
 )
 
 func main() {

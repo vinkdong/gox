@@ -2,9 +2,9 @@ package net
 
 import (
 	"fmt"
-	"github.com/vinkdong/gox/log"
 	"net"
 	"strings"
+	"v2k.io/gox/log"
 )
 
 /*

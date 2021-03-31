@@ -2,9 +2,9 @@ package ssh
 
 import (
 	"github.com/tmc/scp"
-	"github.com/vinkdong/gox/log"
 	"io/ioutil"
 	"os"
+	"v2k.io/gox/log"
 )
 
 func (s *SSH) WriteBytesToRemoteHost(data []byte, filename string) error {

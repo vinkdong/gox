@@ -5,12 +5,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/vinkdong/gox/log"
 	"io"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
+	"v2k.io/gox/log"
 )
 
 // ssh config文件

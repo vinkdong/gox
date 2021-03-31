@@ -1,4 +1,4 @@
-module github.com/vinkdong/gox
+module v2k.io/gox
 
 go 1.12
 

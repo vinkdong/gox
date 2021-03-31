@@ -3,7 +3,7 @@ jobs:
    build:
      docker:
        - image: circleci/golang:1.8
-     working_directory: /go/src/github.com/vinkdong/gox
+     working_directory: /go/src/v2k.io/gox
 
      steps:
        - checkout

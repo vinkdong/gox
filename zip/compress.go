@@ -2,11 +2,11 @@ package zip
 
 import (
 	"archive/zip"
-	"github.com/vinkdong/gox/log"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"v2k.io/gox/log"
 )
 
 /*

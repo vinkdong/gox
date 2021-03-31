@@ -1,11 +1,11 @@
 package downloader
 
 import (
-	"github.com/vinkdong/gox/log"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"v2k.io/gox/log"
 )
 
 func GetFileContent(url string) (data []byte, statusCode int, err error) {
