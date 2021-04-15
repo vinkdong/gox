@@ -193,7 +193,7 @@ func Infof(l string, a ...interface{}) {
 }
 
 func Error(l interface{}) {
-	err := fmt.Sprintf("[%s] %s%v", "Error", getLineInfo(hideFileInfo), l)
+	err := fmt.Sprintf("[%s] %s%v", "ERROR", getLineInfo(hideFileInfo), l)
 	log.Println(err)
 }
 
@@ -203,8 +203,8 @@ func Errorf(format string, a ...interface{}) {
 	log.Println(err)
 }
 
-func ErrorLine(l string, a ...interface{}) {
-	err := fmt.Sprintf("[%s] %s%s", "Error", getLineInfo(false), l)
+func ErrorLine(l interface{}) {
+	err := fmt.Sprintf("[%s] %s%v", "ERROR", getLineInfo(false), l)
 	log.Println(err)
 }
 
