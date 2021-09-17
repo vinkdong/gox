@@ -43,3 +43,32 @@ func String(length ...int) string {
 	}
 	return string(bytes)
 }
+
+/*
+随机生成UUID字符串
+length 长度
+upper 大写
+digital 数字
+special 特殊字符 - *
+*/
+func UUID(length int, upper bool, digital bool, special string) string {
+	if length == 0 {
+		return ""
+	}
+	base := "abcdefghijklmnopqrstuvwxyz"
+	if upper {
+		base += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	}
+	if digital {
+		base += "0123456789"
+	}
+	if special != "" {
+		base += special
+	}
+	result := make([]byte, length, length)
+	baseLen := len(base)
+	for i := 0; i < length; i++ {
+		result[i] = base[rand.Intn(baseLen)]
+	}
+	return string(result)
+}

@@ -34,3 +34,8 @@ func TestRangeIntWithExclude(t *testing.T) {
 	i = RangeIntInclude(Slice{2, 4}, Slice{3, 8})
 	checkInt(i, 2, 8, t)
 }
+
+func TestUUID(t *testing.T) {
+	Seed(time.Now().UnixNano())
+	println(UUID(1000, true, true, "-*"))
+}
