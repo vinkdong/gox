@@ -37,3 +37,12 @@ func UnionString(slices ...[]string) []string {
 	}
 	return s
 }
+
+func IsContain(sliceA []string, element string) bool {
+	for _, v := range sliceA {
+		if v == element {
+			return true
+		}
+	}
+	return false
+}
