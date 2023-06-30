@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/imroc/req v0.3.2
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/tmc/scp v0.0.0-20170824174625-f7b48647feef

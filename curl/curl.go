@@ -1,6 +1,7 @@
 package curl
 
 import (
+	"github.com/imroc/req"
 	shellwords "github.com/mattn/go-shellwords"
 	"strings"
 )
@@ -10,6 +11,15 @@ type Curl struct {
 	Method  string            `json:"method"`
 	Headers map[string]string `json:"headers"`
 	Data    string            `json:"data"`
+}
+
+func (c *Curl) Call() (*req.Resp, error) {
+
+	header := req.Header{}
+	for h, v := range c.Headers {
+		header[h] = v
+	}
+	return req.Do(c.Method, c.Url, header, c.Data)
 }
 
 func ParseCurlCommand(curlCmd string) (*Curl, error) {
@@ -28,15 +38,15 @@ func ParseCurlCommand(curlCmd string) (*Curl, error) {
 	// i=0是curl
 	for i := 1; i < len(args); i++ {
 		arg := args[i]
-		switch arg {
-		case "-X":
+		switch strings.Trim(arg, "\n") {
+		case "-X", "--request":
 			i++
 			method = args[i]
-		case "-H":
+		case "-H", "--header":
 			i++
 			headerParts := strings.SplitN(args[i], ": ", 2)
 			headers[headerParts[0]] = headerParts[1]
-		case "-d", "--data-raw":
+		case "-d", "--data-raw", "--data":
 			i++
 			data = args[i]
 		default:

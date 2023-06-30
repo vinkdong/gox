@@ -1,5 +1,7 @@
 # github.com/go-sql-driver/mysql v1.6.0
 github.com/go-sql-driver/mysql
+# github.com/imroc/req v0.3.2
+github.com/imroc/req
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 github.com/kballard/go-shellquote
 # github.com/mattn/go-shellwords v1.0.12
@@ -16,5 +18,9 @@ golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+golang.org/x/crypto/ssh/terminal
 # golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
 golang.org/x/sys/cpu
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+golang.org/x/sys/windows
