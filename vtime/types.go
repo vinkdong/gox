@@ -39,7 +39,8 @@ func (t *Time) FromRelativeTime(relative string) error {
 	return nil
 }
 
-/**
+/*
+*
 transfer a time format to another format
 */
 func (t *Time) Transfer(to *Time) error {
@@ -81,7 +82,8 @@ func (t *Time) Parser() (time.Time, error) {
 	return t.Time, err
 }
 
-/**
+/*
+*
 parser time to vtime
 */
 func (t *Time) FromTime(stdTime time.Time) {

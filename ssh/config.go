@@ -140,7 +140,8 @@ func Scan(r io.Reader) *Config {
 }
 
 // convert line to key:value
-//    Host   abc
+//
+//	Host   abc
 func convertLine(lineBytes []byte) (string, string) {
 	key := bytes.Buffer{}
 	value := bytes.Buffer{}

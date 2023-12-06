@@ -72,9 +72,9 @@ func itoa(buf *[]byte, i int, wid int) {
 }
 
 // formatHeader writes log header to buf in following order:
-//   * l.prefix (if it's not blank),
-//   * date and/or time (if corresponding flags are provided),
-//   * file and line number (if corresponding flags are provided).
+//   - l.prefix (if it's not blank),
+//   - date and/or time (if corresponding flags are provided),
+//   - file and line number (if corresponding flags are provided).
 func (l *Logger) formatHeader(buf *[]byte, t time.Time, file string, line int) {
 	*buf = append(*buf, l.prefix...)
 	if l.flag&(log.Ldate|log.Ltime|log.Lmicroseconds) != 0 {
