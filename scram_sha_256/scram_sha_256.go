@@ -40,7 +40,10 @@ func ComputeClientProof(password, saltBase64 string, iterations int, authMessage
 	if err != nil {
 		return "", err
 	}
+	return ComputeClientSaltedPasswordProof(saltedPassword, authMessage)
+}
 
+func ComputeClientSaltedPasswordProof(saltedPassword []byte, authMessage string) (string, error) {
 	// ClientKey
 	clientKey := hmac.New(sha256.New, saltedPassword)
 	if _, err := clientKey.Write([]byte("Client Key")); err != nil {
@@ -83,6 +86,20 @@ func ComputeServerSignature(password, saltBase64 string, authMessage string, ite
 	if err != nil {
 		return nil, err
 	}
+	serverKey := hmac.New(sha256.New, saltedPassword)
+	if _, err := serverKey.Write([]byte("Server Key")); err != nil {
+		return nil, err
+	}
+
+	serverSignature := hmac.New(sha256.New, serverKey.Sum(nil))
+	if _, err := serverSignature.Write([]byte(authMessage)); err != nil {
+		return nil, err
+	}
+
+	return serverSignature.Sum(nil), nil
+}
+
+func ComputeServerSaltedPasswordSignature(saltedPassword []byte, authMessage string) ([]byte, error) {
 	serverKey := hmac.New(sha256.New, saltedPassword)
 	if _, err := serverKey.Write([]byte("Server Key")); err != nil {
 		return nil, err
