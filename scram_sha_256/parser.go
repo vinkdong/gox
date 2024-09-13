@@ -9,7 +9,7 @@ import (
 type SCRAMParams struct {
 	DefaultUsername string // 没有等号的默认用户名
 	Username        string // 实际用户名列表
-	Random          string // 客户端和服务器的随机数
+	ClientNonce     string // 客户端随机数
 	Salt            string // 盐值
 	Iterations      int    // 迭代次数
 }
@@ -38,7 +38,7 @@ func ParseSCRAMMessage(message string) (*SCRAMParams, error) {
 			}
 			params.Username = value
 		case "r":
-			params.Random = value
+			params.ClientNonce = value
 		case "s":
 			params.Salt = value
 		case "i":
