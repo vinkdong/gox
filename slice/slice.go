@@ -1,5 +1,11 @@
 package slice
 
+import (
+	"fmt"
+	"reflect"
+	"sort"
+)
+
 type Runtime struct {
 }
 
@@ -45,4 +51,54 @@ func IsContain(sliceA []string, element string) bool {
 		}
 	}
 	return false
+}
+
+type KeyValue struct {
+	Key   string
+	Value string
+}
+
+func StructToFlatSlice(prefix string, obj interface{}, result *[]KeyValue) {
+	val := reflect.ValueOf(obj)
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return
+		}
+		val = val.Elem()
+	}
+
+	switch val.Kind() {
+	case reflect.Struct:
+		typ := val.Type()
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			tag := field.Tag.Get("json")
+			if tag == "" || tag == "-" {
+				continue
+			}
+			fieldValue := val.Field(i)
+
+			newPrefix := tag
+			if prefix != "" {
+				newPrefix = prefix + "." + tag
+			}
+
+			StructToFlatSlice(newPrefix, fieldValue.Interface(), result)
+		}
+	case reflect.Slice:
+		for i := 0; i < val.Len(); i++ {
+			item := val.Index(i).Interface()
+			newPrefix := fmt.Sprintf("%s[%d]", prefix, i)
+			StructToFlatSlice(newPrefix, item, result)
+		}
+	default:
+		*result = append(*result, KeyValue{Key: prefix, Value: fmt.Sprintf("%v", val.Interface())})
+	}
+}
+
+func StructToSortedFlatSlice(prefix string, obj interface{}, result *[]KeyValue) {
+	StructToFlatSlice(prefix, obj, result)
+	sort.Slice(*result, func(i, j int) bool {
+		return (*result)[i].Key < (*result)[j].Key
+	})
 }
