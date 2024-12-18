@@ -1,4 +1,4 @@
-package utils
+package terms
 
 import (
 	"bufio"
