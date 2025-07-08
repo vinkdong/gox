@@ -3,6 +3,7 @@ package slice
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestDifference(t *testing.T) {
@@ -28,4 +29,27 @@ func TestUnionString(t *testing.T) {
 	if len(s4) != 5 {
 		t.Fatal("slice union len should be 5 ")
 	}
+}
+
+func TestStructToSortedFlatSlice(t *testing.T) {
+	type C struct {
+		A string         `json:"ca"`
+		B *time.Duration `json:"cb"`
+	}
+	type Cfg struct {
+		A string `json:"aa"`
+		B int    `json:"ab"`
+		C *C     `json:"ac"`
+	}
+	_t := time.Second * 14
+	c := Cfg{
+		A: "abc",
+		B: 5,
+		C: &C{
+			A: "a",
+			B: &_t,
+		},
+	}
+	var flatSlice []KeyValue
+	StructToSortedFlatSlice("", c, &flatSlice)
 }
