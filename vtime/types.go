@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"v2k.io/gox/log"
 )
 
@@ -82,10 +83,7 @@ func (t *Time) Parser() (time.Time, error) {
 	return t.Time, err
 }
 
-/*
-*
-parser time to vtime
-*/
+// FromTime parser time to vtime /*
 func (t *Time) FromTime(stdTime time.Time) {
 	if t.Format == "timestamp" {
 		switch t.Unit {
