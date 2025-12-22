@@ -5,11 +5,13 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const ClrEnd = "\x1b[0m"
@@ -20,122 +22,138 @@ const ClrWarn = "\x1b[33;2m"
 var (
 	debug        = false
 	hideFileInfo = true
-)
 
-var std = New(os.Stdout, "", log.LstdFlags)
-var (
-	writeLock    = &sync.RWMutex{}
-	writeEnabled = false
-	filename     = "/var/log/gox.log"
+	std           *Logger
+	fileWriter    io.Writer // 纯文本文件 writer（无颜色）
+	consoleWriter io.Writer // 带颜色的控制台 writer
+	mu            sync.Mutex
+
+	fileEnabled    bool
+	consoleEnabled = true
 )
 
 type Logger struct {
-	mu     sync.Mutex // ensures atomic writes; protects the following fields
-	prefix string     // prefix to write at beginning of each line
-	flag   int        // properties
-	out    io.Writer  // destination for output
-	buf    []byte     // for accumulating text to write
+	mu     sync.Mutex
+	prefix string
+	flag   int
+	out    io.Writer // 最终输出目标（MultiWriter）
+	buf    []byte
 }
 
-func (l *Logger) Write(p []byte) (n int, err error) {
-	l.buf = append(l.buf, p...)
-	return l.out.Write(p)
+func init() {
+	// 初始只输出到控制台（带颜色）
+	consoleWriter = os.Stdout
+	std = New(consoleWriter, "", log.Ldate|log.Ltime)
 }
 
-func (l *Logger) String() string {
-	return string(l.buf[:])
+// ==================== 配置函数 ====================
+func SetFileOutput(options ...FileOption) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	// 初始化 lumberjack
+	lj := &lumberjack.Logger{
+		Filename:   "/var/log/gox.log",
+		MaxSize:    100, // MB
+		MaxBackups: 10,
+		MaxAge:     180, // days
+		Compress:   true,
+	}
+
+	for _, opt := range options {
+		opt(lj)
+	}
+
+	// 确保目录存在
+	dir := filepath.Dir(lj.Filename)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		// 如果目录都创建不了，至少打印警告（但不会崩溃）
+		fmt.Fprintf(os.Stderr, "log: 创建日志目录失败 %s: %v\n", dir, err)
+	}
+
+	fileWriter = lj
+	fileEnabled = true
+	consoleEnabled = false // 严格满足第3点：启用文件后关闭控制台
+
+	updateOutputWriter()
 }
 
-func (l *Logger) Bytes() []byte {
-	return l.buf
+// 更新最终输出目标
+func updateOutputWriter() {
+	var writers []io.Writer
+	if fileEnabled && fileWriter != nil {
+		writers = append(writers, fileWriter) // 文件：纯文本
+	}
+	if consoleEnabled && consoleWriter != nil {
+		writers = append(writers, consoleWriter) // 控制台：带颜色
+	}
+
+	if len(writers) == 0 {
+		std.out = io.Discard
+	} else if len(writers) == 1 {
+		std.out = writers[0]
+	} else {
+		std.out = io.MultiWriter(writers...)
+	}
 }
+
+// FileOption 配置项
+type FileOption func(*lumberjack.Logger)
+
+func WithFilename(filename string) FileOption {
+	return func(l *lumberjack.Logger) { l.Filename = filename }
+}
+func WithMaxSize(mb int) FileOption {
+	return func(l *lumberjack.Logger) { l.MaxSize = mb }
+}
+func WithMaxBackups(num int) FileOption {
+	return func(l *lumberjack.Logger) { l.MaxBackups = num }
+}
+func WithMaxAge(days int) FileOption {
+	return func(l *lumberjack.Logger) { l.MaxAge = days }
+}
+func WithCompress(compress bool) FileOption {
+	return func(l *lumberjack.Logger) { l.Compress = compress }
+}
+
+func EnableConsole() {
+	mu.Lock()
+	defer mu.Unlock()
+	consoleEnabled = true
+	updateOutputWriter()
+}
+
+func DisableConsole() {
+	mu.Lock()
+	defer mu.Unlock()
+	consoleEnabled = false
+	updateOutputWriter()
+}
+
+// EnableWrite
+func EnableWrite() { /* 已废弃，保留兼容 */ }
+func SetFilename(name string) {
+	SetFileOutput(WithFilename(name))
+}
+
+func EnableDebug()    { debug = true }
+func EnableFileInfo() { hideFileInfo = false }
+
+// ==================== Logger 核心 ====================
 
 func New(out io.Writer, prefix string, flag int) *Logger {
 	return &Logger{out: out, prefix: prefix, flag: flag}
 }
 
-// Cheap integer to fixed-width decimal ASCII. Give a negative width to avoid zero-padding.
-func itoa(buf *[]byte, i int, wid int) {
-	// Assemble decimal in reverse order.
-	var b [20]byte
-	bp := len(b) - 1
-	for i >= 10 || wid > 1 {
-		wid--
-		q := i / 10
-		b[bp] = byte('0' + i - q*10)
-		bp--
-		i = q
-	}
-	// i < 10
-	b[bp] = byte('0' + i)
-	*buf = append(*buf, b[bp:]...)
-}
-
-// formatHeader writes log header to buf in following order:
-//   - l.prefix (if it's not blank),
-//   - date and/or time (if corresponding flags are provided),
-//   - file and line number (if corresponding flags are provided).
-func (l *Logger) formatHeader(buf *[]byte, t time.Time, file string, line int) {
-	*buf = append(*buf, l.prefix...)
-	if l.flag&(log.Ldate|log.Ltime|log.Lmicroseconds) != 0 {
-		if l.flag&log.LUTC != 0 {
-			t = t.UTC()
-		}
-		if l.flag&log.Ldate != 0 {
-			year, month, day := t.Date()
-			itoa(buf, year, 4)
-			*buf = append(*buf, '/')
-			itoa(buf, int(month), 2)
-			*buf = append(*buf, '/')
-			itoa(buf, day, 2)
-			*buf = append(*buf, ' ')
-		}
-		if l.flag&(log.Ltime|log.Lmicroseconds) != 0 {
-			hour, min, sec := t.Clock()
-			itoa(buf, hour, 2)
-			*buf = append(*buf, ':')
-			itoa(buf, min, 2)
-			*buf = append(*buf, ':')
-			itoa(buf, sec, 2)
-			if l.flag&log.Lmicroseconds != 0 {
-				*buf = append(*buf, '.')
-				itoa(buf, t.Nanosecond()/1e3, 6)
-			}
-			*buf = append(*buf, ' ')
-		}
-	}
-	if l.flag&(log.Lshortfile|log.Llongfile) != 0 {
-		if l.flag&log.Lshortfile != 0 {
-			short := file
-			for i := len(file) - 1; i > 0; i-- {
-				if file[i] == '/' {
-					short = file[i+1:]
-					break
-				}
-			}
-			file = short
-		}
-		*buf = append(*buf, file...)
-		*buf = append(*buf, ':')
-		itoa(buf, line, -1)
-		*buf = append(*buf, ": "...)
-	}
-}
-
-// Output writes the output for a logging event. The string s contains
-// the text to print after the prefix specified by the flags of the
-// Logger. A newline is appended if the last character of s is not
-// already a newline. Calldepth is used to recover the PC and is
-// provided for generality, although at the moment on all pre-defined
-// paths it will be 2.
 func (l *Logger) Output(calldepth int, s string, color string) error {
-	now := time.Now() // get this early.
+	now := time.Now()
 	var file string
 	var line int
+
 	l.mu.Lock()
 	defer l.mu.Unlock()
+
 	if l.flag&(log.Lshortfile|log.Llongfile) != 0 {
-		// Release lock while getting caller info - it's expensive.
 		l.mu.Unlock()
 		var ok bool
 		_, file, line, ok = runtime.Caller(calldepth)
@@ -145,154 +163,134 @@ func (l *Logger) Output(calldepth int, s string, color string) error {
 		}
 		l.mu.Lock()
 	}
+
 	l.buf = l.buf[:0]
-	if len(color) > 0 {
-		l.buf = []byte(color)
+
+	// 关键：只有控制台输出才加颜色，文件输出不加
+	if consoleEnabled && !fileEnabled { // 纯控制台模式
+		if color != "" {
+			l.buf = append(l.buf, color...)
+		}
 	}
+
 	l.formatHeader(&l.buf, now, file, line)
 	l.buf = append(l.buf, s...)
-	if len(color) > 0 {
-		l.buf = append(l.buf, ClrEnd...)
+
+	if consoleEnabled && !fileEnabled {
+		if color != "" {
+			l.buf = append(l.buf, ClrEnd...)
+		}
 	}
+
 	if len(s) == 0 || s[len(s)-1] != '\n' {
 		l.buf = append(l.buf, '\n')
 	}
+
 	_, err := l.out.Write(l.buf)
 	return err
 }
 
-// 展示Debug日志
-func EnableDebug() {
-	debug = true
+// 精简版工具函数
+func itoa(buf *[]byte, i int, wid int) {
+	var b [20]byte
+	bp := len(b) - 1
+	for i >= 10 || wid > 1 {
+		wid--
+		q := i / 10
+		b[bp] = byte('0' + i - q*10)
+		bp--
+		i = q
+	}
+	b[bp] = byte('0' + i)
+	*buf = append(*buf, b[bp:]...)
 }
 
-// 在日志中展示相关的文件信息
-func EnableFileInfo() {
-	hideFileInfo = false
-}
-
-// 在打印日志的同时写入日志文件
-func EnableWrite() {
-	writeEnabled = true
-}
-
-// 设置日志文件的路径
-func SetFilename(name string) {
-	filename = name
-}
-
-func Info(l interface{}) {
-	info := fmt.Sprintf("[%s] %s%v", "INFO", getLineInfo(hideFileInfo), l)
-	std.Output(2, info, "")
-}
-
-func Infof(l string, a ...interface{}) {
-	tmp := fmt.Sprintf(l, a...)
-	info := fmt.Sprintf("[%s] %s%s", "INFO", getLineInfo(hideFileInfo), tmp)
-	std.Output(2, info, "")
-}
-
-func Error(l interface{}) {
-	err := fmt.Sprintf("[%s] %s%v", "ERROR", getLineInfo(hideFileInfo), l)
-	log.Println(err)
-}
-
-func Errorf(format string, a ...interface{}) {
-	tmp := fmt.Sprintf(format, a...)
-	err := fmt.Sprintf("[%s] %s%s", "Error", getLineInfo(hideFileInfo), tmp)
-	log.Println(err)
-}
-
-func ErrorLine(l interface{}) {
-	err := fmt.Sprintf("[%s] %s%v", "ERROR", getLineInfo(false), l)
-	log.Println(err)
-}
-
-func ErrorLinef(format string, a ...interface{}) {
-	tmp := fmt.Sprintf(format, a...)
-	err := fmt.Sprintf("[%s] %s%s", "Error", getLineInfo(false), tmp)
-	log.Println(err)
-}
-
-func Debug(l interface{}) {
-	if debug {
-		debug := fmt.Sprintf("[%s] %s%v", "DEBUG", getLineInfo(hideFileInfo), l)
-		std.Output(2, debug, ClrDEBUG)
+func (l *Logger) formatHeader(buf *[]byte, t time.Time, file string, line int) {
+	*buf = append(*buf, l.prefix...)
+	if l.flag&(log.Ldate|log.Ltime) != 0 {
+		year, month, day := t.Date()
+		itoa(buf, year, 4)
+		*buf = append(*buf, '/')
+		itoa(buf, int(month), 2)
+		*buf = append(*buf, '/')
+		itoa(buf, day, 2)
+		*buf = append(*buf, ' ')
+		hour, min, sec := t.Clock()
+		itoa(buf, hour, 2)
+		*buf = append(*buf, ':')
+		itoa(buf, min, 2)
+		*buf = append(*buf, ':')
+		itoa(buf, sec, 2)
+		*buf = append(*buf, ' ')
+	}
+	if l.flag&(log.Lshortfile|log.Llongfile) != 0 {
+		if l.flag&log.Lshortfile != 0 {
+			for i := len(file) - 1; i > 0; i-- {
+				if file[i] == '/' {
+					file = file[i+1:]
+					break
+				}
+			}
+		}
+		*buf = append(*buf, file...)
+		*buf = append(*buf, ':')
+		itoa(buf, line, -1)
+		*buf = append(*buf, ": "...)
 	}
 }
 
-func Debugf(format string, a ...interface{}) {
-	if debug {
-		tmp := fmt.Sprintf(format, a...)
-		debug := fmt.Sprintf("[%s] %s%s", "DEBUG", getLineInfo(hideFileInfo), tmp)
-		std.Output(2, debug, ClrDEBUG)
-	}
-}
-
-func Write(l interface{}) {
-	writeLock.Lock()
-	defer writeLock.Unlock()
-	// 不去检查文件夹是否存在，使用前请确认文件夹存在并且有相关权限
-	if !writeEnabled {
-		return
-	}
-	formattedTime := time.Now().Format("2006/1/02 15:04:05")
-	line := fmt.Sprintf("\n%s %v", formattedTime, l)
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		return
-	}
-
-	defer f.Close()
-
-	if _, err = f.WriteString(line); err != nil {
-		return
-	}
-}
-
-func Writef(format string, a ...interface{}) {
-	tmp := fmt.Sprintf(format, a...)
-	Write(tmp)
-}
-
-func Lock() {
-	std.mu.Lock()
-}
-
-func Unlock() {
-	std.mu.Unlock()
-}
-
-func Success(l interface{}) {
-	success := fmt.Sprintf("[INFO] %s%v", getLineInfo(hideFileInfo), l)
-	std.Output(2, success, ClrSuccess)
-}
-
-func Successf(format string, a ...interface{}) {
-	tmp := fmt.Sprintf(format, a...)
-	success := fmt.Sprintf("[INFO] %s%v", getLineInfo(hideFileInfo), tmp)
-	std.Output(2, success, ClrSuccess)
-}
-
-func Warn(l interface{}) {
-	warn := fmt.Sprintf("[WARN] %s%v", getLineInfo(hideFileInfo), l)
-	std.Output(2, warn, ClrWarn)
-}
-
-func Warnf(format string, a ...interface{}) {
-	tmp := fmt.Sprintf(format, a...)
-	warn := fmt.Sprintf("[WARN] %s%v", getLineInfo(hideFileInfo), tmp)
-	std.Output(2, warn, ClrWarn)
-}
+// ==================== 公共日志函数（保持原调用方式） ====================
 
 func getLineInfo(skip bool) string {
 	if skip {
 		return ""
 	}
 	_, file, line, _ := runtime.Caller(2)
-	filenameSplit := strings.Split(file, "/")
-	if len(filenameSplit) > 2 {
-		return fmt.Sprintf("%s/%s:%d ", filenameSplit[len(filenameSplit)-2], filenameSplit[len(filenameSplit)-1], line)
+	parts := strings.Split(file, "/")
+	if len(parts) >= 2 {
+		return fmt.Sprintf("%s/%s:%d ", parts[len(parts)-2], parts[len(parts)-1], line)
 	}
-	return file + ":" + strconv.Itoa(line) + " "
+	return fmt.Sprintf("%s:%d ", file, line)
 }
+
+// 统一入口宏
+func logOutput(s string, color string) {
+	std.Output(2, s, color)
+}
+
+func Info(v interface{})               { logOutput(fmt.Sprintf("[INFO] %s%v", getLineInfo(hideFileInfo), v), "") }
+func Infof(f string, a ...interface{}) { Info(fmt.Sprintf(f, a...)) }
+
+func Success(v interface{}) {
+	logOutput(fmt.Sprintf("[INFO] %s%v", getLineInfo(hideFileInfo), v), ClrSuccess)
+}
+func Successf(f string, a ...interface{}) { Success(fmt.Sprintf(f, a...)) }
+
+func Warn(v interface{}) {
+	logOutput(fmt.Sprintf("[WARN] %s%v", getLineInfo(hideFileInfo), v), ClrWarn)
+}
+func Warnf(f string, a ...interface{}) { Warn(fmt.Sprintf(f, a...)) }
+
+func Error(v interface{})               { logOutput(fmt.Sprintf("[ERROR] %s%v", getLineInfo(hideFileInfo), v), "") }
+func Errorf(f string, a ...interface{}) { Error(fmt.Sprintf(f, a...)) }
+
+func ErrorLine(v interface{})               { logOutput(fmt.Sprintf("[ERROR] %s%v", getLineInfo(false), v), "") }
+func ErrorLinef(f string, a ...interface{}) { ErrorLine(fmt.Sprintf(f, a...)) }
+
+func Debug(v interface{}) {
+	if debug {
+		logOutput(fmt.Sprintf("[DEBUG] %s%v", getLineInfo(hideFileInfo), v), ClrDEBUG)
+	}
+}
+func Debugf(f string, a ...interface{}) {
+	if debug {
+		Debug(fmt.Sprintf(f, a...))
+	}
+}
+
+// 兼容旧 Write
+func Write(v interface{})               { Info(v) }
+func Writef(f string, a ...interface{}) { Write(fmt.Sprintf(f, a...)) }
+
+func Lock()   { std.mu.Lock() }
+func Unlock() { std.mu.Unlock() }

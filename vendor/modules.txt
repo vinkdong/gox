@@ -25,3 +25,5 @@ golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
+# gopkg.in/natefinch/lumberjack.v2 v2.2.1
+gopkg.in/natefinch/lumberjack.v2

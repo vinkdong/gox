@@ -10,4 +10,5 @@ require (
 	github.com/tmc/scp v0.0.0-20170824174625-f7b48647feef
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )

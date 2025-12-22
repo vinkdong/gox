@@ -10,7 +10,16 @@ func TestInfo(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	Error("this is error")
+	SetFileOutput(
+		WithFilename("/tmp/app.log"),
+		WithMaxSize(1), // 50MB
+		WithMaxBackups(7),
+		WithMaxAge(90),
+		WithCompress(false),
+	)
+	for i := 0; i < 20e4; i++ {
+		Errorf("this is error %d", i+1)
+	}
 }
 
 func TestSuccess(t *testing.T) {
@@ -48,7 +57,6 @@ func TestLock(t *testing.T) {
 }
 
 func TestWrite(t *testing.T) {
-	writeEnabled = true
 	SetFilename("/tmp/gox.log")
 	Write("hahaha")
 	Write(123)
