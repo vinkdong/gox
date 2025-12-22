@@ -137,6 +137,7 @@ func SetFilename(name string) {
 }
 
 func EnableDebug()    { debug = true }
+func DisableDebug()   { debug = false }
 func EnableFileInfo() { hideFileInfo = false }
 
 // ==================== Logger 核心 ====================
