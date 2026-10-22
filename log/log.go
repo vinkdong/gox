@@ -71,11 +71,21 @@ func SetFileOutput(options ...FileOption) {
 		fmt.Fprintf(os.Stderr, "log: 创建日志目录失败 %s: %v\n", dir, err)
 	}
 
+	old := fileWriter
 	fileWriter = lj
 	fileEnabled = true
 	consoleEnabled = false // 严格满足第3点：启用文件后关闭控制台
 
+	// Hold std.mu while swapping and closing so Output cannot write to a
+	// writer we are about to close (e.g. on config reload).
+	std.mu.Lock()
 	updateOutputWriter()
+	if old != nil && old != lj {
+		if c, ok := old.(io.Closer); ok {
+			_ = c.Close()
+		}
+	}
+	std.mu.Unlock()
 }
 
 // 更新最终输出目标
@@ -128,6 +138,20 @@ func DisableConsole() {
 	defer mu.Unlock()
 	consoleEnabled = false
 	updateOutputWriter()
+}
+
+func SetConsoleWriter(w io.Writer) {
+	mu.Lock()
+	defer mu.Unlock()
+	consoleWriter = w
+	updateOutputWriter()
+}
+
+// GetConsoleWriter 返回当前的 consoleWriter
+func GetConsoleWriter() io.Writer {
+	mu.Lock()
+	defer mu.Unlock()
+	return consoleWriter
 }
 
 // EnableWrite

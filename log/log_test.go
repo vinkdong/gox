@@ -1,9 +1,46 @@
 package log
 
 import (
+	"io"
+	"path/filepath"
 	"testing"
 	"time"
 )
+
+type closeTracker struct {
+	closed int
+}
+
+func (c *closeTracker) Write(p []byte) (int, error) { return len(p), nil }
+func (c *closeTracker) Close() error                { c.closed++; return nil }
+
+func TestSetFileOutputClosesPrevious(t *testing.T) {
+	tracker := &closeTracker{}
+	mu.Lock()
+	fileWriter = tracker
+	fileEnabled = true
+	mu.Unlock()
+
+	SetFileOutput(
+		WithFilename(filepath.Join(t.TempDir(), "app.log")),
+		WithCompress(false),
+		WithMaxBackups(1),
+	)
+	t.Cleanup(func() {
+		mu.Lock()
+		defer mu.Unlock()
+		if c, ok := fileWriter.(io.Closer); ok && fileWriter != nil {
+			_ = c.Close()
+		}
+		fileWriter = nil
+		fileEnabled = false
+		updateOutputWriter()
+	})
+
+	if tracker.closed != 1 {
+		t.Fatalf("previous file writer Close called %d times, want 1", tracker.closed)
+	}
+}
 
 func TestInfo(t *testing.T) {
 	Info("this is info")
